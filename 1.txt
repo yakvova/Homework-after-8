@@ -1,0 +1,50 @@
+import sqlite3
+
+try:
+    sqlite_connection = sqlite3.connect("university.db")
+    print("База данных подключена к SQLite")
+    
+   
+    sqlite_create_students_table = '''
+    CREATE TABLE Students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        surname TEXT NOT NULL,
+        age INTEGER NOT NULL,
+        city TEXT NOT NULL
+    );'''
+    cursor = sqlite_connection.cursor()
+    cursor.execute(sqlite_create_students_table)
+    print("Таблица Students создана")
+
+    
+    sqlite_create_courses_table = '''
+    CREATE TABLE Courses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        time_start TEXT NOT NULL,
+        time_end TEXT NOT NULL
+    );'''
+    cursor.execute(sqlite_create_courses_table)
+    print("Таблица Courses создана")
+
+    
+    sqlite_create_student_courses_table = '''
+    CREATE TABLE Student_courses (
+        student_id INTEGER NOT NULL,
+        course_id INTEGER NOT NULL,
+        FOREIGN KEY (student_id) REFERENCES Students (id),
+        FOREIGN KEY (course_id) REFERENCES Courses (id)
+    );'''
+    cursor.execute(sqlite_create_student_courses_table)
+    print("Таблица Student_courses создана")
+
+    sqlite_connection.commit()
+    cursor.close()
+
+except sqlite3.Error as error:
+    print("Ошибка при подключении к sqlite", error)
+finally:
+    if sqlite_connection:
+        sqlite_connection.close()
+        print("Соединение с SQLite закрыто")
