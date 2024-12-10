@@ -1,0 +1,113 @@
+from peewee import Model, SqliteDatabase, CharF, IntegerF, ForeignKeyF, AutoF
+
+
+db = SqliteDatabase('university_orm.db')
+class BaseModel(Model):
+    class Meta:
+        database = db
+
+class Student(BaseModel):
+    id = AutoF()
+    name = CharF()
+    surname = CharF()
+    age = IntegerF()
+    city = CharF()
+
+class Course(BaseModel):
+    id = AutoF()
+    name = CharF()
+    time_start = CharF()
+    time_end = CharF()
+
+class StudentCourse(BaseModel):
+    student = ForeignKeyF(Student, backref='courses')
+    course = ForeignKeyF(Course, backref='students')
+
+
+class UniversityORM:
+    @staticmethod
+    def initialize_db():
+      
+        db.connect()
+        db.create_tables([Student, Course, StudentCourse])
+        print("База данных и таблицы инициализированы")
+
+    @staticmethod
+    def populate_data():
+      
+        if Student.select().exists() or Course.select().exists():
+            print("Данные уже существуют в базе данных")
+            return
+        
+     
+        python_course = Course.create(name='python', time_start='21.07.21', time_end='21.08.21')
+        java_course = Course.create(name='java', time_start='13.07.21', time_end='16.08.21')
+
+       
+        max_student = Student.create(name='Max', surname='Brooks', age=24, city='Spb')
+        john_student = Student.create(name='John', surname='Stones', age=15, city='Spb')
+        andy_student = Student.create(name='Andy', surname='Wings', age=45, city='Manhester')
+        kate_student = Student.create(name='Kate', surname='Brooks', age=34, city='Spb')
+
+      
+        StudentCourse.create(student=max_student, course=python_course)
+        StudentCourse.create(student=john_student, course=python_course)
+        StudentCourse.create(student=andy_student, course=python_course)
+        StudentCourse.create(student=kate_student, course=java_course)
+
+        print("Данные успешно добавлены")
+
+
+
+    @staticmethod
+    def get_students_over_30():
+       
+        return Student.select().where(Student.age > 30)
+
+
+
+    @staticmethod
+    def get_students_in_course(course_name):
+       
+        return (Student
+                .select()
+                .join(StudentCourse)
+                .join(Course)
+                .where(Course.name == course_name))
+
+
+
+    @staticmethod
+    def get_students_in_course_and_city(course_name, city):
+       
+        return (Student
+                .select()
+                .join(StudentCourse)
+                .join(Course)
+                .where((Course.name == course_name) & (Student.city == city)))
+
+
+
+
+# ТестЫ
+if __name__ == "__main__":
+    UniversityORM.initialize_db()
+    UniversityORM.populate_data()
+
+    # 1 Студенты старше 30 лет
+    students_over_30 = UniversityORM.get_students_over_30()
+    print("Студенты старше 30 лет:")
+    for student in students_over_30:
+        print(student.name, student.surname, student.age, student.city)
+
+    # 2 Студенты, которые проходят курс по питону
+    python_students = UniversityORM.get_students_in_course("python")
+    print("\nСтуденты, проходящие курс по python:")
+    for student in python_students:
+        print(student.name, student.surname, student.city)
+
+    # 3 Студенты из СПБ, которые проходят курс по питону
+    python_spb_students = UniversityORM.get_students_in_course_and_city("python", "Spb")
+    print("\nСтуденты из Spb, проходящие курс по python:")
+    for student in python_spb_students:
+        print(student.name, student.surname, student.city)
